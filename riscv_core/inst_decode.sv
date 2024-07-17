@@ -1,6 +1,4 @@
-`include "defines.v"
-
-module inst_fetch(
+module inst_decode(
     input   wire                        clk_i,
     input   wire                        rst_n_i,
     input   wire [`HOLD_BUS]            hold_flag_i,       // pipeline pasue
@@ -11,25 +9,9 @@ module inst_fetch(
     output  reg  [`INST_DATA_BUS]       inst_o,            // instruction output
     output  reg  [`INST_ADDR_BUS]       inst_addr_o        // instruction address input
 );
+    
 
-wire hold_id_en = (hold_flag_reg > HOLD_PC); // enable hold flag when hold flag is for IF or ID
-
-always_ff @(posedge clk_i) begin 
-    if (!rst_n_i) begin
-        interrupt_flag_o    <= `INT_NONE;
-        inst_o              <= `INST_NOP;
-        inst_addr_o         <= `RESET_ADDR;
-    end
-    else if (hold_id_en) begin
-        interrupt_flag_o    <= `INT_NONE;
-        inst_o              <= `INST_NOP;
-        inst_addr_o         <= `RESET_ADDR;
-    end
-    else begin
-        ins_addr_o          <= {ins_addr_i[31:2], {2'b0}};
-        inst_o              <= inst_i;
-        int_flag_o          <= int_flag_i;
-    end
+always_ff @(posedge clk_i) begin
+    
 end
-
 endmodule
