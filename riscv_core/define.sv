@@ -1,5 +1,14 @@
 `define RESET_ADDR      32'h0
 
+`define REG_ADDR_BUS    [4:0]
+`define REG_DATA_BUS    [31:0]
+
+`define ROM_DEPTH       4096  // rom depth(how many words)
+
+`define MEM_DEPTH       4096  // memory depth(how many words)
+`define MEM_DATA_BUS    31:0
+`define MEM_ADDR_BUS    31:0
+
 `define HOLD_BUS        [2:0]
 `define HOLD_NONE       3'b000
 `define HOLD_PC         3'b001
@@ -27,9 +36,9 @@
 `define INST_OR         3'b110
 `define INST_AND        3'b111
 `define ADD_FUNC        7'h0
-`define SUB_FUNC        7'h1 
+`define SUB_FUNC        7'b0100000 
 `define SRL_FUNC        7'h0
-`define SRA_FUNC        7'h1 
+`define SRA_FUNC        7'h0100000 
 
 // I and L type instruction
 `define INST_L_TYPE     7'b0000011
@@ -86,4 +95,4 @@
 `define INST_FENCE      8'b0000_1111
 `define INST_FENCE_I    8'b1000_1111
 `define INST_ECALL      8'b0111_0011
-`define INST_EBreak     8'b1111_0011
+`define INST_EBREAK     8'b1111_0011
