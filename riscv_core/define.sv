@@ -1,7 +1,7 @@
 `define RESET_ADDR      32'h0
 
-`define REG_ADDR_BUS    [4:0]
-`define REG_DATA_BUS    [31:0]
+`define REG_ADDR_BUS    4:0
+`define REG_DATA_BUS    31:0
 
 `define ROM_DEPTH       4096  // rom depth(how many words)
 
@@ -9,17 +9,17 @@
 `define MEM_DATA_BUS    31:0
 `define MEM_ADDR_BUS    31:0
 
-`define HOLD_BUS        [2:0]
+`define HOLD_BUS        2:0
 `define HOLD_NONE       3'b000
 `define HOLD_PC         3'b001
 `define HOLD_IF_ID      3'b010
 `define HOLD_ID_EX      3'b011
 
-`define INST_DATA_BUS   [31:0]      // width for instruction data bus
-`define INST_ADDR_BUS   [31:0]      // width for instruction address bus
-`define INST_NOP        32'h0013   // no operation; machine code for addi x0, x0, 0
+`define INST_DATA_BUS   31:0      // width for instruction data bus
+`define INST_ADDR_BUS   31:0      // width for instruction address bus
+`define INST_NOP        32'h0013  // no operation; machine code for addi x0, x0, 0
 
-`define INT_BUS         [7:0]       // width for interrupt bus
+`define INT_BUS         7:0       // width for interrupt bus
 `define INT_NONE        8'h0
 `define INT_TIMER       8'h1
 
