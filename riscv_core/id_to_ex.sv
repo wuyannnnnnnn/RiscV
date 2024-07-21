@@ -1,4 +1,6 @@
-module id_ex(
+`include "defines.v"
+
+module id_to_ex(
     input   wire                        clk_i,
     input   wire                        rst_n_i,
     input   wire [`HOLD_BUS]            hold_flag_i,                        
@@ -92,3 +94,5 @@ always_ff @( posedge clk_i ) begin
         csr_rdata_o     = csr_rdata_i;
     end
 end
+
+endmodule

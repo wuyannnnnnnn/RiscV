@@ -1,3 +1,5 @@
+`include "defines.v"
+
 module inst_decode(
     input   wire                        clk_i,
     input   wire                        rst_n_i,
