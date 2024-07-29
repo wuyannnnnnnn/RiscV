@@ -5,22 +5,21 @@ module inst_execute (
     input   wire                        rst_n_i,
 
     // ID
-    input   wire [`REG_DATA_BUS]        op1_i,
-    input   wire [`REG_DATA_BUS]        op2_i,
-    input   wire [`REG_DATA_BUS]        offset_i,
-    input   wire [`MEM_ADDR_BUS]        op1_jump_i,
-    input   wire [`MEM_ADDR_BUS]        op2_jump_i,
-    input   wire [`INST_DATA_BUS]       inst_i,         
-    input   wire [`INST_ADDR_BUS]       inst_addr_i,
-    input   wire                        reg_wen_i,
-    input   wire [`REG_DATA_BUS]        reg1_rdata_i,       
-    input   wire [`REG_DATA_BUS]        reg2_rdata_i,     
-    input   wire [`REG_ADDR_BUS]        reg_waddr_i, 
+    input   reg  [`REG_DATA_BUS]        op1_i,
+    input   reg  [`REG_DATA_BUS]        op2_i,
+    input   reg  [`REG_DATA_BUS]        offset_i,
+    input   reg  [`INST_DATA_BUS]       inst_i,         
+    input   reg  [`INST_ADDR_BUS]       inst_addr_i,        
+    input   reg                         reg_wen_i,             
+    input   reg  [`REG_ADDR_BUS]        reg_waddr_i,    
+    input   reg                         csr_wen_i,        
+    input   reg  [`MEM_DATA_BUS]        csr_rdata_i,      
+    input   reg  [`MEM_ADDR_BUS]        csr_waddr_i,    
 
     // reg
     output  reg                         reg_wen_o,
-    output  reg  [`INST_REG_ADDR]       reg_waddr_o,
-    output  reg  [`INST_REG_DATA]       reg_wdata_o,
+    output  reg  [`REG_ADDR_BUS]        reg_waddr_o,
+    output  reg  [`REG_DATA_BUS]        reg_wdata_o,
     
     // memory
     input   wire [`MEM_DATA_BUS]        mem_rdata_i,
@@ -29,10 +28,6 @@ module inst_execute (
     output  reg                         mem_wen_o, 
     output  wire [`MEM_ADDR_BUS]        mem_waddr_o, 
     output  reg  [`MEM_DATA_BUS]        mem_wdata_o,
-
-    input   wire                        csr_wen_i,        
-    input   wire [`REG_DATA_BUS]        csr_rdata_i,      
-    input   wire [`MEM_ADDR_BUS]        csr_waddr_i,
 
     // alu 
     input   wire [`REG_DATA_BUS]        alu_data_i,     
@@ -53,13 +48,14 @@ always_comb begin
     func7           = inst_i [31:25];
     func3           = inst_i [14:12];   
     opcode          = inst_i [6 :0]; 
-    mem_raddr_byte  = (opcode == `INST_L_TYPE) ? (op1_i + offset_i) : 32'b0;
-    mem_waddr_byte  = (opcode == `INST_S_TYPE) ? (op1_i + offset_i) : 32'b0;
+    
 end
 
 always_comb begin 
     reg_wen_o       = reg_wen_i;
-    
+    reg_waddr_o     = reg_waddr_i;
+    csr_wen_o       = csr_wen_i;
+    csr_waddr_o     = csr_waddr_i;
 
     priority case (opcode)
         `INST_R_TYPE: begin
@@ -131,8 +127,6 @@ always_comb begin
                     alu_data1_o     = 32'b0;
                     alu_data2_o     = 32'b0;
                     alu_op_o        = 4'b0;
-                    reg_wen_o       = 1'b0;
-                    reg_waddr_o     = 5'b0;
                     reg_wdata_o     = 32'b0;
                 end
             endcase
@@ -207,21 +201,24 @@ always_comb begin
                     alu_data1_o     = 32'b0;
                     alu_data2_o     = 32'b0;
                     alu_op_o        = 4'b0;
-                    reg_waddr_o     = 5'b0;
                     reg_wdata_o     = 32'b0;
                 end
             endcase
         end
 
         `INST_L_TYPE: begin
-            alu_data1_o     = 32'b0;
-            alu_data2_o     = 32'b0;
-            alu_op_o        = 4'b0;
-            reg_waddr_o     = 5'b0;
+            alu_data1_o     = op1_i;
+            alu_data2_o     = offset_i;
+            alu_op_o        = `ALU_ADD;
+            mem_rib_wreq_o  = 1'b0;
+            mem_wen_o       = 1'b0;
+            mem_waddr_o     = 32'b0;
+            mem_wdata_o     = 32'b0;
+            mem_raddr_o     = alu_res_i;
 
             priority case (func3)
                 `INST_LB: begin
-                    priority case(mem_raddr_byte[1:0])
+                    priority case(alu_res_i[1:0])
                         2'b00: begin
                             reg_wdata_o = {{24{mem_rdata_i[7]}}, mem_rdata_i[7:0]};
                         end
@@ -238,7 +235,7 @@ always_comb begin
                 end
 
                 `INST_LH: begin
-                    if(|mem_raddr_byte[1:0]) begin
+                    if(|alu_res_i[1:0]) begin
                         reg_wdata_o = {{16{mem_rdata_i[31]}}, mem_rdata_i[31:16]};
                     end
                     else begin
@@ -251,7 +248,7 @@ always_comb begin
                 end
 
                 `INST_LBU: begin
-                    priority case(mem_raddr_byte[1:0])
+                    priority case(alu_res_i[1:0])
                         2'b00: begin
                             reg_wdata_o = {{24{1'b0}}, mem_rdata_i[7:0]};
                         end
@@ -268,7 +265,7 @@ always_comb begin
                 end
 
                 `INST_LHU: begin
-                    if(|mem_raddr_byte[1:0]) begin
+                    if(|alu_res_i[1:0]) begin
                         reg_wdata_o = {{16{1'b0}}, mem_rdata_i[31:16]};
                     end
                     else begin
@@ -282,19 +279,47 @@ always_comb begin
             endcase
         end
 
+        `INST_JAL: begin
+            alu_data1_o     = op1_i;
+            alu_data2_o     = offset_i;
+            alu_op_o        = `ALU_ADD;
+            reg_wdata_o     = op1_i + 32''h4;
+            mem_rib_wreq_o  = 1'b0;
+            mem_wen_o       = 1'b0;
+            mem_waddr_o     = 32'b0;
+            mem_wdata_o     = 32'b0;
+            mem_raddr_o     = 32'b0;
+            jump_flag_o     = 1'b1;
+            jump_addr_o     = alu_res_i;
+        end
+
+        `INST_JALR: begin
+            alu_data1_o     = op1_i;
+            alu_data2_o     = offset_i;
+            alu_op_o        = `ALU_ADD;
+            reg_wdata_o     = op2_i + 32''h4;
+            mem_rib_wreq_o  = 1'b0;
+            mem_wen_o       = 1'b0;
+            mem_waddr_o     = 32'b0;
+            mem_wdata_o     = 32'b0;
+            mem_raddr_o     = 32'b0;
+            jump_flag_o     = 1'b1;
+            jump_addr_o     = alu_res_i & ~32'b1;
+        end
+
         `INST_S_TYPE: begin
-            alu_data1_o     = 32'b0;
-            alu_data2_o     = 32'b0;
-            alu_op_o        = 4'b0;
+            alu_data1_o     = op1_i;
+            alu_data2_o     = offset_i;
+            alu_op_o        = `ALU_ADD;
             reg_waddr_o     = 5'b0;
             mem_rib_wreq_o  = 1'b1;
             mem_wen_o       = 1'b1;
-            mem_waddr_o     = op1_i + offset_i;
-            mem_raddr_o     = op1_i + offset_i;
+            mem_waddr_o     = alu_res_i;
+            mem_raddr_o     = alu_res_i;
 
             priority case (func3)
                 `INST_SB: begin
-                    priority case(mem_waddr_byte[1:0])
+                    priority case(alu_res_i[1:0])
                         2'b00: begin
                             mem_wdata_o = {mem_rdata_i[31:8], op2_i[7:0]};
                         end
@@ -311,7 +336,7 @@ always_comb begin
                 end
 
                 `INST_SH: begin
-                    if(|mem_raddr_byte[1:0]) begin
+                    if(|alu_res_i[1:0]) begin
                         mem_wdata_o = {op2_i[15:0], mem_rdata_i[15:0]};
                     end
                     else begin
@@ -327,64 +352,6 @@ always_comb begin
                     mem_wdata_o = 32'b0;
                 end
             endcase
-        end
-
-        `INST_JAL: begin
-            alu_data1_o     = op1_i;
-            alu_data2_o     = op2_i;
-            alu_op_o        = `ALU_ADD;
-            reg_waddr_o     = 5'b0;
-            reg_wdata_o     = op1_i + 32''h4;
-            mem_rib_wreq_o  = 1'b0;
-            mem_wen_o       = 1'b0;
-            mem_waddr_o     = 32'b0;
-            mem_raddr_o     = 32'b0;
-            mem_wdata_o     = 32'b0;
-            jump_flag_o     = 1'b1;
-            jump_addr_o     = alu_res_i;
-        end
-
-        `INST_JALR: begin
-            alu_data1_o     = op1_i;
-            alu_data2_o     = op2_i;
-            alu_op_o        = `ALU_ADD;
-            reg_waddr_o     = 5'b0;
-            reg_wdata_o     = op1_i + 32''h4;
-            mem_rib_wreq_o  = 1'b0;
-            mem_wen_o       = 1'b0;
-            mem_waddr_o     = 32'b0;
-            mem_raddr_o     = 32'b0;
-            mem_wdata_o     = 32'b0;
-            jump_flag_o     = 1'b1;
-            jump_addr_o     = alu_res_i & ~32'b1;
-        end
-
-        `INST_LUI: begin
-            alu_data1_o     = 32'b0;
-            alu_data2_o     = 32'b0;
-            alu_op_o        = 4'b0;
-            reg_wdata_o     = op1_i;
-            mem_rib_wreq_o  = 1'b0;
-            mem_wen_o       = 1'b0;
-            mem_waddr_o     = 32'b0;
-            mem_raddr_o     = 32'b0;
-            mem_wdata_o     = 32'b0;
-            jump_flag_o     = 1'b0;
-            jump_addr_o     = 32'b0;
-        end
-
-        `INST_AUIPC: begin
-            alu_data1_o     = 32'b0;
-            alu_data2_o     = 32'b0;
-            alu_op_o        = 4'b0;
-            reg_wdata_o     = op1_i;
-            mem_rib_wreq_o  = 1'b0;
-            mem_wen_o       = 1'b0;
-            mem_waddr_o     = 32'b0;
-            mem_raddr_o     = 32'b0;
-            mem_wdata_o     = 32'b0;
-            jump_flag_o     = 1'b0;
-            jump_addr_o     = 32'b0;
         end
 
         `INST_B_TYPE: begin
@@ -444,12 +411,84 @@ always_comb begin
                     jump_addr_o     = (|alu_res_i) ? 32'b0 : (inst_addr_i + offset_i);
                 end
 
+                default: begin
+                    alu_data1_o     = 32'b0;
+                    alu_data2_o     = 32'b0;
+                    alu_op_o        = 4'b0;
+                    reg_wdata_o     = 32'b0;
+                end
+            endcase
+        end
+
+        `INST_LUI: begin
+            alu_data1_o     = 32'b0;
+            alu_data2_o     = 32'b0;
+            alu_op_o        = 4'b0;
+            reg_wdata_o     = op1_i;
+            mem_rib_wreq_o  = 1'b0;
+            mem_wen_o       = 1'b0;
+            mem_waddr_o     = 32'b0;
+            mem_raddr_o     = 32'b0;
+            mem_wdata_o     = 32'b0;
+            jump_flag_o     = 1'b0;
+            jump_addr_o     = 32'b0;
+        end
+
+        `INST_AUIPC: begin
+            alu_data1_o     = op1_i;
+            alu_data2_o     = inst_i;
+            alu_op_o        = `ALU_ADD;
+            reg_wdata_o     = alu_res_i;
+            mem_rib_wreq_o  = 1'b0;
+            mem_wen_o       = 1'b0;
+            mem_waddr_o     = 32'b0;
+            mem_raddr_o     = 32'b0;
+            mem_wdata_o     = 32'b0;
+            jump_flag_o     = 1'b0;
+            jump_addr_o     = 32'b0;
+        end
+
+        `INST_CSR_TYPE: begin
+            priority case (func3)
+                `INST_CSRRW: begin
+                    alu_data1_o     = 32'b0;
+                    alu_data2_o     = 32'b0;
+                    alu_op_o        = 4'b0;
+                    reg_wdata_o     = csr_rdata_i;
+                    csr_waddr_o     = op1_i;
+                    mem_rib_wreq_o  = 1'b0;
+                    mem_wen_o       = 1'b0;
+                    mem_waddr_o     = 32'b0;
+                    mem_raddr_o     = 32'b0;
+                    mem_wdata_o     = 32'b0;
+                    jump_flag_o     = 1'b0;
+                    jump_addr_o     = 32'b0;
+                end
+
+                `INST_CSRRS: begin
+                    alu_data1_o     = csr_rdata_i;
+                    alu_data2_o     = op1_i;
+                    alu_op_o        = `ALU_OR;
+                    reg_wdata_o     = csr_rdata_i;
+                    csr_waddr_o     = alu_res_i;
+                    mem_rib_wreq_o  = 1'b0;
+                    mem_wen_o       = 1'b0;
+                    mem_waddr_o     = 32'b0;
+                    mem_raddr_o     = 32'b0;
+                    mem_wdata_o     = 32'b0;
+                    jump_flag_o     = 1'b0;
+                    jump_addr_o     = 32'b0;
+                end
+
                 default: 
             endcase
         end
 
-        endcase
-    
+        
+
+        default: 
+        
+    endcase
 end
 
 endmodule
