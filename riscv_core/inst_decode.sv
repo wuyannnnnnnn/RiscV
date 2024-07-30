@@ -246,7 +246,7 @@ always_comb begin
                     reg_waddr_o     = rd;
                     reg1_raddr_o    = rs1;
                     reg2_raddr_o    = 5'b0;
-                    op1_o           = 32'b0;
+                    op1_o           = reg1_raddr_i;
                     op2_o           = 32'b0;
                     offset_o        = 32'b0;
                     csr_wen_o       = 1'b1;
