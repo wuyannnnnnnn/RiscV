@@ -15,8 +15,8 @@ module inst_decode(
     output  reg  [`REG_ADDR_BUS]        reg2_raddr_o,
     
     // csr_reg
-    input   wire [`MEM_DATA_BUS]        csr_rdata_i,
-    output  reg  [`MEM_ADDR_BUS]        csr_raddr_o,  
+    input   wire [`CSR_DATA_BUS]        csr_rdata_i,
+    output  reg  [`CSR_ADDR_BUS]        csr_raddr_o,  
 
     // EX
     output  reg  [`REG_DATA_BUS]        op1_o,
@@ -27,8 +27,8 @@ module inst_decode(
     output  reg                         reg_wen_o,             
     output  reg  [`REG_ADDR_BUS]        reg_waddr_o,    
     output  reg                         csr_wen_o,        
-    output  reg  [`MEM_DATA_BUS]        csr_rdata_o,      
-    output  reg  [`MEM_ADDR_BUS]        csr_waddr_o     
+    output  reg  [`CSR_DATA_BUS]        csr_rdata_o,      
+    output  reg  [`CSR_ADDR_BUS]        csr_waddr_o     
 );
     
 // 32-bit instructions info

@@ -13,8 +13,8 @@ module inst_execute (
     input   reg                         reg_wen_i,             
     input   reg  [`REG_ADDR_BUS]        reg_waddr_i,    
     input   reg                         csr_wen_i,        
-    input   reg  [`MEM_DATA_BUS]        csr_rdata_i,      
-    input   reg  [`MEM_ADDR_BUS]        csr_waddr_i,    
+    input   reg  [`CSR_DATA_BUS]        csr_rdata_i,      
+    input   reg  [`CSR_ADDR_BUS]        csr_waddr_i,    
 
     // reg
     output  reg                         reg_wen_o,
@@ -23,8 +23,8 @@ module inst_execute (
 
     // csr
     output  reg                         csr_wen_o,
-    output  reg  [`REG_ADDR_BUS]        csr_waddr_o,
-    output  reg  [`REG_DATA_BUS]        csr_wdata_o,
+    output  reg  [`CSR_ADDR_BUS]        csr_waddr_o,
+    output  reg  [`CSR_DATA_BUS]        csr_wdata_o,
     
     // memory
     input   wire [`MEM_DATA_BUS]        mem_rdata_i,
@@ -492,7 +492,7 @@ always_comb begin
                     alu_data2_o     = 32'b0;
                     alu_op_o        = 4'b0;
                     reg_wdata_o     = csr_rdata_i;
-                    csr_waddr_o     = op1_i;
+                    csr_wdata_o     = op1_i;
                     mem_rib_wreq_o  = 1'b0;
                     mem_wen_o       = 1'b0;
                     mem_waddr_o     = 32'b0;
@@ -507,7 +507,7 @@ always_comb begin
                     alu_data2_o     = op1_i;
                     alu_op_o        = `ALU_OR;
                     reg_wdata_o     = csr_rdata_i;
-                    csr_waddr_o     = alu_res_i;
+                    csr_wdata_o     = alu_res_i;
                     mem_rib_wreq_o  = 1'b0;
                     mem_wen_o       = 1'b0;
                     mem_waddr_o     = 32'b0;
@@ -522,7 +522,7 @@ always_comb begin
                     alu_data2_o     = ~ op1_i;
                     alu_op_o        = `ALU_AND;
                     reg_wdata_o     = csr_rdata_i;
-                    csr_waddr_o     = alu_res_i;
+                    csr_wdata_o     = alu_res_i;
                     mem_rib_wreq_o  = 1'b0;
                     mem_wen_o       = 1'b0;
                     mem_waddr_o     = 32'b0;
@@ -537,7 +537,7 @@ always_comb begin
                     alu_data2_o     = 32'b0;
                     alu_op_o        = 4'b0;
                     reg_wdata_o     = 32'b0;
-                    csr_waddr_o     = 32'b0;
+                    csr_wdata_o     = 32'b0;
                     mem_rib_wreq_o  = 1'b0;
                     mem_wen_o       = 1'b0;
                     mem_waddr_o     = 32'b0;
@@ -554,7 +554,7 @@ always_comb begin
             alu_data2_o     = 32'b0;
             alu_op_o        = 4'b0;
             reg_wdata_o     = 32'b0;
-            csr_waddr_o     = 32'b0;
+            csr_wdata_o     = 32'b0;
             mem_rib_wreq_o  = 1'b0;
             mem_wen_o       = 1'b0;
             mem_waddr_o     = 32'b0;
