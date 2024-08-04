@@ -40,8 +40,8 @@ module inst_execute (
 
     // alu 
     input   wire [`REG_DATA_BUS]        alu_data_i,     
-    input   wire                        alu_zero_i,    
-    input   wire                        alu_sign_i,
+    //input   wire                        alu_zero_i,    
+    //input   wire                        alu_sign_i,
     output  reg  [`REG_DATA_BUS]        alu_data1_o,
     output  reg  [`REG_DATA_BUS]        alu_data2_o,
     output  reg  [3:0]                  alu_op_o
